@@ -30,11 +30,18 @@ namespace LedgerService.Server
                 .ValidateDataAnnotations()
                 .ValidateOnStart();
 
+            var screeningOptions = builder.Configuration.GetSection(ScreeningClientOptions.SectionName)
+                .Get<ScreeningClientOptions>() ?? new ScreeningClientOptions();
+
             builder.Services.AddHttpClient<IScreeningClient, ScreeningClient>((sp, http) =>
                     http.BaseAddress = new Uri(sp.GetRequiredService<IOptions<ScreeningClientOptions>>().Value.BaseUrl))
                 .AddStandardResilienceHandler(o =>
                 {
-                    o.Retry.MaxRetryAttempts = 3;
+                    // A transfer waits for screening, so the wait is kept short. When time runs out the transfer is refused.
+                    o.AttemptTimeout.Timeout = screeningOptions.AttemptTimeout;
+                    o.TotalRequestTimeout.Timeout = screeningOptions.TotalRequestTimeout;
+                    o.Retry.MaxRetryAttempts = screeningOptions.MaxRetryAttempts;
+                    o.Retry.Delay = screeningOptions.RetryDelay;
                     o.Retry.ShouldRetryAfterHeader = true; // honour Retry-After on 429/503
                 });
 
