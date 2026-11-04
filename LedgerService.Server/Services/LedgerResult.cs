@@ -3,7 +3,8 @@ namespace LedgerService.Server.Services;
 public enum LedgerError
 {
     InvalidAmount,
-    AccountNotFound
+    AccountNotFound,
+    InsufficientFunds
 }
 
 /// <summary>Outcome of a ledger operation: either a value or a business error. Not for unexpected failures.</summary>

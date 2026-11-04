@@ -20,6 +20,14 @@ public class AccountsController(ILedgerService ledger, IAuditService audit) : Co
         return result.IsSuccess ? Ok(TransactionDto.From(result.Value!)) : ToProblem(result.Error!.Value);
     }
 
+    [HttpPost("{accountNumber}/withdrawals")]
+    public async Task<ActionResult<TransactionDto>> Withdraw(
+        string accountNumber, AmountRequest request, CancellationToken ct)
+    {
+        var result = await ledger.WithdrawAsync(accountNumber, request.Amount, ct);
+        return result.IsSuccess ? Ok(TransactionDto.From(result.Value!)) : ToProblem(result.Error!.Value);
+    }
+
     [HttpGet("{accountNumber}/audit")]
     public async Task<ActionResult<IReadOnlyList<AuditEntryDto>>> GetAuditTrail(string accountNumber, CancellationToken ct) =>
         Ok((await audit.GetAuditTrailAsync(accountNumber, ct)).Select(AuditEntryDto.From));
@@ -33,6 +41,9 @@ public class AccountsController(ILedgerService ledger, IAuditService audit) : Co
         LedgerError.AccountNotFound => Problem(
             statusCode: StatusCodes.Status404NotFound,
             title: "Account not found"),
+        LedgerError.InsufficientFunds => Problem(
+            statusCode: StatusCodes.Status422UnprocessableEntity,
+            title: "Insufficient funds"),
         _ => Problem(statusCode: StatusCodes.Status500InternalServerError)
     };
 }
