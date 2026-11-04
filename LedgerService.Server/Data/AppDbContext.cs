@@ -3,13 +3,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LedgerService.Server.Data;
 
-/// <summary>Primary store: balances, transactions, idempotency records and the audit outbox.</summary>
+/// <summary>Primary store: balances, transactions, idempotency records and the audit trail (for now).</summary>
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
-    public DbSet<AuditOutboxItem> AuditOutbox => Set<AuditOutboxItem>();
+    public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -62,14 +62,20 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(r => r.RequestHash).HasMaxLength(64).IsRequired();
         });
 
-        b.Entity<AuditOutboxItem>(e =>
+        b.Entity<AuditEntry>(e =>
         {
-            e.ToTable("AuditOutbox");
-            e.HasKey(o => o.Id);
-            e.HasIndex(o => o.TransactionId).IsUnique();
-            // Worker scans for pending items.
-            e.HasIndex(o => o.ProcessedAt);
-            e.HasOne<Transaction>().WithMany().HasForeignKey(o => o.TransactionId).OnDelete(DeleteBehavior.Restrict);
+            e.ToTable("AuditEntries");
+            e.HasKey(a => a.Id);
+            e.Property(a => a.FromAccount).HasMaxLength(32);
+            e.Property(a => a.ToAccount).HasMaxLength(32);
+            e.Property(a => a.Amount).HasPrecision(18, 2);
+            e.Property(a => a.Currency).HasMaxLength(3).IsRequired();
+
+            // Exactly one audit entry per booked transaction, enforced by the database.
+            e.HasIndex(a => a.TransactionId).IsUnique();
+            e.HasOne<Transaction>().WithOne().HasForeignKey<AuditEntry>(a => a.TransactionId).OnDelete(DeleteBehavior.Restrict);
+            e.HasIndex(a => a.FromAccount);
+            e.HasIndex(a => a.ToAccount);
         });
     }
 }

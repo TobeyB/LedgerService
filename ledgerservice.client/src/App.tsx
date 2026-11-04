@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState } from 'react';
 import { getAccounts, type Account } from './api';
+import AuditTrail from './AuditTrail';
 import './App.css';
 
 const money = new Intl.NumberFormat('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -7,6 +8,7 @@ const money = new Intl.NumberFormat('sv-SE', { minimumFractionDigits: 2, maximum
 function App() {
     const [accounts, setAccounts] = useState<Account[]>();
     const [error, setError] = useState<string>();
+    const [selected, setSelected] = useState<string>();
 
     useEffect(() => {
         const controller = new AbortController();
@@ -32,6 +34,7 @@ function App() {
                                 <th>Owner</th>
                                 <th>Type</th>
                                 <th style={{ textAlign: 'right' }}>Balance</th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -41,11 +44,20 @@ function App() {
                                     <td>{a.owner}</td>
                                     <td>{a.type}</td>
                                     <td style={{ textAlign: 'right' }}>{money.format(a.balance)} {a.currency}</td>
+                                    <td>
+                                        <button
+                                            type="button"
+                                            aria-pressed={selected === a.accountNumber}
+                                            onClick={() => setSelected(selected === a.accountNumber ? undefined : a.accountNumber)}>
+                                            Audit trail
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 )}
+            {selected && <AuditTrail accountNumber={selected} />}
         </div>
     );
 }

@@ -1,8 +1,9 @@
 namespace LedgerService.Server.Models.Domain;
 
 /// <summary>
-/// Audit record for exactly one booked transaction. Lives in a separate store that may be down,
-/// so it is written after booking and must be idempotent on <see cref="TransactionId"/> (unique).
+/// Audit record for exactly one booked transaction, written in the same database transaction as the booking.
+/// Currently stored in the main database; a later mechanism will move entries to a separate audit store,
+/// so <see cref="TransactionId"/> stays unique to keep that move idempotent.
 /// Deliberately holds no personal data (no owner names) — account numbers only.
 /// </summary>
 public class AuditEntry
@@ -25,7 +26,7 @@ public class AuditEntry
     /// <summary>When the underlying transaction was booked.</summary>
     public required DateTimeOffset BookedAt { get; init; }
 
-    /// <summary>When the audit entry itself was written (may lag if the audit store was down).</summary>
+    /// <summary>When the audit entry itself was written (same moment as booking for now).</summary>
     public DateTimeOffset RecordedAt { get; init; } = DateTimeOffset.UtcNow;
 
     public static AuditEntry From(Transaction t) => new()

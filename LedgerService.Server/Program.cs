@@ -21,6 +21,8 @@ namespace LedgerService.Server
             builder.Services.AddDbContext<AppDbContext>(o =>
                 o.UseSqlServer(builder.Configuration.GetConnectionString("Ledger")));
 
+            builder.Services.AddScoped<IAuditService, AuditService>();
+
             var app = builder.Build();
 
             if (app.Environment.IsDevelopment())

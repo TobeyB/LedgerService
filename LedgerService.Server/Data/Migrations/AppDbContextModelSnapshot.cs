@@ -55,34 +55,51 @@ namespace LedgerService.Server.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("LedgerService.Server.Models.Domain.AuditOutboxItem", b =>
+            modelBuilder.Entity("LedgerService.Server.Models.Domain.AuditEntry", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("uniqueidentifier");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("Attempts")
-                        .HasColumnType("int");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
+                    b.Property<DateTimeOffset>("BookedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<DateTimeOffset?>("ProcessedAt")
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<string>("FromAccount")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<DateTimeOffset>("RecordedAt")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ToAccount")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
 
                     b.Property<Guid>("TransactionId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("ProcessedAt");
+                    b.HasIndex("FromAccount");
+
+                    b.HasIndex("ToAccount");
 
                     b.HasIndex("TransactionId")
                         .IsUnique();
 
-                    b.ToTable("AuditOutbox", (string)null);
+                    b.ToTable("AuditEntries", (string)null);
                 });
 
             modelBuilder.Entity("LedgerService.Server.Models.Domain.IdempotencyRecord", b =>
@@ -164,11 +181,11 @@ namespace LedgerService.Server.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("LedgerService.Server.Models.Domain.AuditOutboxItem", b =>
+            modelBuilder.Entity("LedgerService.Server.Models.Domain.AuditEntry", b =>
                 {
                     b.HasOne("LedgerService.Server.Models.Domain.Transaction", null)
-                        .WithMany()
-                        .HasForeignKey("TransactionId")
+                        .WithOne()
+                        .HasForeignKey("LedgerService.Server.Models.Domain.AuditEntry", "TransactionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

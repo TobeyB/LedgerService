@@ -7,4 +7,8 @@ public record AccountDto(
     string Owner,
     AccountType Type,
     decimal Balance,
-    string Currency);
+    string Currency)
+{
+    public static AccountDto From(Account a) =>
+        new(a.AccountNumber, a.Owner, a.Type, a.Balance, a.Currency);
+}
