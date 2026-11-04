@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { getAuditTrail, type AuditEntry } from './api';
+import { money, when } from './format';
 
-const money = new Intl.NumberFormat('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const when = new Intl.DateTimeFormat('sv-SE', { dateStyle: 'short', timeStyle: 'medium' });
 
-export default function AuditTrail({ accountNumber }: { accountNumber: string }) {
+export default function AuditTrail({ accountNumber, version }: { accountNumber: string; version: number }) {
     // Results are tagged with the account they belong to, so a slow response for a previously
     // selected account is never shown under the current one.
     const [loaded, setLoaded] = useState<{ account: string; entries?: AuditEntry[]; error?: string }>();
@@ -18,7 +17,7 @@ export default function AuditTrail({ accountNumber }: { accountNumber: string })
                 setLoaded({ account: accountNumber, error: e instanceof Error ? e.message : 'Could not load audit trail.' });
             });
         return () => controller.abort();
-    }, [accountNumber]);
+    }, [accountNumber, version]);
 
     const current = loaded?.account === accountNumber ? loaded : undefined;
 

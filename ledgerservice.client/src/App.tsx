@@ -1,14 +1,15 @@
-﻿import { useEffect, useState } from 'react';
+﻿import { useCallback, useEffect, useState } from 'react';
 import { getAccounts, type Account } from './api';
+import AccountOperations from './AccountOperations';
 import AuditTrail from './AuditTrail';
+import { money } from './format';
 import './App.css';
-
-const money = new Intl.NumberFormat('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 function App() {
     const [accounts, setAccounts] = useState<Account[]>();
     const [error, setError] = useState<string>();
     const [selected, setSelected] = useState<string>();
+    const [auditVersion, setAuditVersion] = useState(0);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -21,11 +22,25 @@ function App() {
         return () => controller.abort();
     }, []);
 
+    // After a booking: show the new balances and the new audit entry.
+    const onBooked = useCallback(async () => {
+        try {
+            setAccounts(await getAccounts());
+            setError(undefined);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Could not refresh the accounts.');
+        }
+        setAuditVersion(v => v + 1);
+    }, []);
+
+    const selectedAccount = accounts?.find(a => a.accountNumber === selected);
+
     return (
         <div>
             <h1>Accounts</h1>
-            {error ? <p role="alert">{error}</p>
-                : accounts === undefined ? <p>Loading…</p>
+            {error && <p role="alert">{error}</p>}
+            {accounts === undefined
+                ? (error ? null : <p>Loading…</p>)
                 : (
                     <table aria-label="Accounts">
                         <thead>
@@ -49,7 +64,7 @@ function App() {
                                             type="button"
                                             aria-pressed={selected === a.accountNumber}
                                             onClick={() => setSelected(selected === a.accountNumber ? undefined : a.accountNumber)}>
-                                            Audit trail
+                                            Open
                                         </button>
                                     </td>
                                 </tr>
@@ -57,7 +72,12 @@ function App() {
                         </tbody>
                     </table>
                 )}
-            {selected && <AuditTrail accountNumber={selected} />}
+            {selectedAccount && (
+                <>
+                    <AccountOperations key={selectedAccount.accountNumber} account={selectedAccount} onBooked={onBooked} />
+                    <AuditTrail accountNumber={selectedAccount.accountNumber} version={auditVersion} />
+                </>
+            )}
         </div>
     );
 }
