@@ -17,6 +17,17 @@ services:
       retries: 20
       start_period: 15s
 
+  screening:
+    build:
+      context: .
+      dockerfile: ScreeningService/Dockerfile
+    container_name: ledger-screening
+    environment:
+      ASPNETCORE_HTTP_PORTS: "8080"
+      # Optional overrides for the fake, e.g. Screening__FailureRate: "0" for a calm demo.
+    ports:
+      - "5217:8080"
+
   server:
     build:
       context: .
@@ -27,11 +38,14 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
       ConnectionStrings__Ledger: "Server=sqlserver,1433;Database=Ledger;User Id=sa;Password=Ledger_Dev_Pwd1;TrustServerCertificate=True"
+      Screening__BaseUrl: "http://screening:8080"
     ports:
       - "5120:8080"
     depends_on:
       sqlserver:
         condition: service_healthy
+      screening:
+        condition: service_started
 
   client:
     build:

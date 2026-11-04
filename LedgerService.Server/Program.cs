@@ -1,6 +1,8 @@
 using LedgerService.Server.Data;
 using LedgerService.Server.Services;
+using LedgerService.Server.Services.Screening;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System.Text.Json.Serialization;
 
 namespace LedgerService.Server
@@ -22,6 +24,19 @@ namespace LedgerService.Server
                 o.UseSqlServer(builder.Configuration.GetConnectionString("Ledger")));
 
             builder.Services.AddScoped<IAuditService, AuditService>();
+
+            builder.Services.AddOptions<ScreeningClientOptions>()
+                .Bind(builder.Configuration.GetSection(ScreeningClientOptions.SectionName))
+                .ValidateDataAnnotations()
+                .ValidateOnStart();
+
+            builder.Services.AddHttpClient<IScreeningClient, ScreeningClient>((sp, http) =>
+                    http.BaseAddress = new Uri(sp.GetRequiredService<IOptions<ScreeningClientOptions>>().Value.BaseUrl))
+                .AddStandardResilienceHandler(o =>
+                {
+                    o.Retry.MaxRetryAttempts = 3;
+                    o.Retry.ShouldRetryAfterHeader = true; // honour Retry-After on 429/503
+                });
 
             var app = builder.Build();
 
