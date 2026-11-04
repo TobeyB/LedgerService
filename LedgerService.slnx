@@ -5,4 +5,5 @@
   </Project>
   <Project Path="LedgerService.Server/LedgerService.Server.csproj" />
   <Project Path="LedgerService.Tests/LedgerService.Tests.csproj" />
+  <Project Path="ScreeningService/ScreeningService.csproj" />
 </Solution>
