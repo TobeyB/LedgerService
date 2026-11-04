@@ -1,0 +1,46 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: ledger-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Ledger_Dev_Pwd1"   # Development only. Must match appsettings.json.
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q \"SELECT 1\" || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+
+  server:
+    build:
+      context: .
+      dockerfile: LedgerService.Server/Dockerfile
+    container_name: ledger-server
+    environment:
+      # Development: the app applies migrations and seeds demo accounts on startup.
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__Ledger: "Server=sqlserver,1433;Database=Ledger;User Id=sa;Password=Ledger_Dev_Pwd1;TrustServerCertificate=True"
+    ports:
+      - "5120:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+
+  client:
+    build:
+      context: ledgerservice.client
+    container_name: ledger-client
+    ports:
+      - "3000:80"
+    depends_on:
+      - server
+
+volumes:
+  sqlserver-data:
