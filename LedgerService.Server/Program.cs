@@ -1,3 +1,6 @@
+using LedgerService.Server.Data;
+using Microsoft.EntityFrameworkCore;
+
 namespace LedgerService.Server
 {
     public class Program
@@ -9,6 +12,9 @@ namespace LedgerService.Server
             // Add services to the container.
 
             builder.Services.AddControllers();
+
+            builder.Services.AddDbContext<AppDbContext>(o =>
+                o.UseSqlServer(builder.Configuration.GetConnectionString("Ledger")));
 
             var app = builder.Build();
 
