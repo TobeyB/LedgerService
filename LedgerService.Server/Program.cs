@@ -1,5 +1,7 @@
 using LedgerService.Server.Data;
+using LedgerService.Server.Services;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 namespace LedgerService.Server
 {
@@ -11,7 +13,10 @@ namespace LedgerService.Server
 
             // Add services to the container.
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+                .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+            builder.Services.AddScoped<ILedgerService, Services.LedgerService>();
 
             builder.Services.AddDbContext<AppDbContext>(o =>
                 o.UseSqlServer(builder.Configuration.GetConnectionString("Ledger")));
