@@ -31,4 +31,8 @@
     </ProjectReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="LedgerService.Tests" />
+  </ItemGroup>
+
 </Project>

@@ -60,6 +60,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasKey(r => r.Key);
             e.Property(r => r.Key).HasMaxLength(200);
             e.Property(r => r.RequestHash).HasMaxLength(64).IsRequired();
+            e.HasOne<Transaction>().WithOne().HasForeignKey<IdempotencyRecord>(r => r.ResultTransactionId).OnDelete(DeleteBehavior.Restrict);
         });
 
         b.Entity<AuditEntry>(e =>

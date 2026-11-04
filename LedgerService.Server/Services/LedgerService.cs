@@ -1,10 +1,11 @@
 using LedgerService.Server.Data;
 using LedgerService.Server.Models.Domain;
+using LedgerService.Server.Services.Screening;
 using Microsoft.EntityFrameworkCore;
 
 namespace LedgerService.Server.Services;
 
-public class LedgerService(AppDbContext db) : ILedgerService
+public partial class LedgerService(AppDbContext db, IScreeningClient screening) : ILedgerService
 {
     public async Task<IReadOnlyList<Account>> GetAccountsAsync(CancellationToken ct = default) =>
         await db.Accounts

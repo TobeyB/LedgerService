@@ -18,7 +18,7 @@ public class LedgerServiceGetAccountsTests(SqlServerFixture sql) : IAsyncLifetim
     [Fact]
     public async Task Returns_empty_list_when_there_are_no_accounts()
     {
-        var accounts = await new Sut(_db).GetAccountsAsync();
+        var accounts = await new Sut(_db, new StubScreeningClient()).GetAccountsAsync();
 
         Assert.Empty(accounts);
     }
@@ -32,7 +32,7 @@ public class LedgerServiceGetAccountsTests(SqlServerFixture sql) : IAsyncLifetim
             Account.Open("NB-1002", "Second", AccountType.Business, 2m));
         await _db.SaveChangesAsync();
 
-        var accounts = await new Sut(_db).GetAccountsAsync();
+        var accounts = await new Sut(_db, new StubScreeningClient()).GetAccountsAsync();
 
         Assert.Equal(["NB-1001", "NB-1002", "NB-1003"], accounts.Select(a => a.AccountNumber));
     }
@@ -43,7 +43,7 @@ public class LedgerServiceGetAccountsTests(SqlServerFixture sql) : IAsyncLifetim
         _db.Accounts.Add(Account.Open("NB-1001", "Anna Lindqvist", AccountType.Business, 12_500.50m));
         await _db.SaveChangesAsync();
 
-        var account = Assert.Single(await new Sut(_db).GetAccountsAsync());
+        var account = Assert.Single(await new Sut(_db, new StubScreeningClient()).GetAccountsAsync());
 
         Assert.Equal("NB-1001", account.AccountNumber);
         Assert.Equal("Anna Lindqvist", account.Owner);
@@ -57,7 +57,7 @@ public class LedgerServiceGetAccountsTests(SqlServerFixture sql) : IAsyncLifetim
     {
         await DbSeeder.SeedAsync(_db);
 
-        var accounts = await new Sut(_db).GetAccountsAsync();
+        var accounts = await new Sut(_db, new StubScreeningClient()).GetAccountsAsync();
 
         Assert.Equal(5, accounts.Count);
         Assert.Contains(accounts, a => a.AccountNumber == DbSeeder.RejectedCompanyAccount && a.Type == AccountType.Business);

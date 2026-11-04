@@ -47,7 +47,7 @@ public class LedgerServiceDepositTests(SqlServerFixture sql) : IAsyncLifetime
     {
         await using var db = NewContext();
 
-        var result = await new Sut(db).DepositAsync("NB-1001", 50.25m);
+        var result = await new Sut(db, new StubScreeningClient()).DepositAsync("NB-1001", 50.25m);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(150.25m, await BalanceAsync("NB-1001"));
@@ -68,7 +68,7 @@ public class LedgerServiceDepositTests(SqlServerFixture sql) : IAsyncLifetime
     {
         await using var db = NewContext();
 
-        var result = await new Sut(db).DepositAsync("NB-1001", 50.25m);
+        var result = await new Sut(db, new StubScreeningClient()).DepositAsync("NB-1001", 50.25m);
 
         var entry = Assert.Single(await AuditEntriesAsync());
         Assert.Equal(result.Value!.Id, entry.TransactionId);
@@ -88,7 +88,7 @@ public class LedgerServiceDepositTests(SqlServerFixture sql) : IAsyncLifetime
             await setup.Database.ExecuteSqlRawAsync("EXEC sp_rename 'AuditEntries', 'AuditEntries_broken'");
 
         await using var db = NewContext();
-        await Assert.ThrowsAnyAsync<Exception>(() => new Sut(db).DepositAsync("NB-1001", 10m));
+        await Assert.ThrowsAnyAsync<Exception>(() => new Sut(db, new StubScreeningClient()).DepositAsync("NB-1001", 10m));
 
         Assert.Equal(100m, await BalanceAsync("NB-1001"));
         Assert.Empty(await TransactionsAsync());
@@ -98,7 +98,7 @@ public class LedgerServiceDepositTests(SqlServerFixture sql) : IAsyncLifetime
     public async Task Database_refuses_a_second_audit_entry_for_the_same_transaction()
     {
         await using var db = NewContext();
-        var booked = (await new Sut(db).DepositAsync("NB-1001", 10m)).Value!;
+        var booked = (await new Sut(db, new StubScreeningClient()).DepositAsync("NB-1001", 10m)).Value!;
 
         await using var other = NewContext();
         other.AuditEntries.Add(AuditEntry.From(booked));
@@ -116,7 +116,7 @@ public class LedgerServiceDepositTests(SqlServerFixture sql) : IAsyncLifetime
     {
         await using var db = NewContext();
 
-        var result = await new Sut(db).DepositAsync("NB-1001", decimal.Parse(amount, System.Globalization.CultureInfo.InvariantCulture));
+        var result = await new Sut(db, new StubScreeningClient()).DepositAsync("NB-1001", decimal.Parse(amount, System.Globalization.CultureInfo.InvariantCulture));
 
         Assert.Equal(LedgerError.InvalidAmount, result.Error);
         Assert.Equal(100m, await BalanceAsync("NB-1001"));
@@ -129,7 +129,7 @@ public class LedgerServiceDepositTests(SqlServerFixture sql) : IAsyncLifetime
     {
         await using var db = NewContext();
 
-        var result = await new Sut(db).DepositAsync("NB-9999", 10m);
+        var result = await new Sut(db, new StubScreeningClient()).DepositAsync("NB-9999", 10m);
 
         Assert.Equal(LedgerError.AccountNotFound, result.Error);
         Assert.Empty(await TransactionsAsync());
@@ -145,7 +145,7 @@ public class LedgerServiceDepositTests(SqlServerFixture sql) : IAsyncLifetime
         await Task.WhenAll(Enumerable.Range(0, count).Select(async _ =>
         {
             await using var db = NewContext();
-            var result = await new Sut(db).DepositAsync("NB-1001", 10.10m);
+            var result = await new Sut(db, new StubScreeningClient()).DepositAsync("NB-1001", 10.10m);
             Assert.True(result.IsSuccess);
         }));
 
@@ -167,7 +167,7 @@ public class LedgerServiceDepositTests(SqlServerFixture sql) : IAsyncLifetime
         await Task.WhenAll(Enumerable.Range(1, 20).Select(async i =>
         {
             await using var db = NewContext();
-            await new Sut(db).DepositAsync("NB-1001", i);
+            await new Sut(db, new StubScreeningClient()).DepositAsync("NB-1001", i);
         }));
 
         var booked = await TransactionsAsync();

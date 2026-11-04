@@ -31,7 +31,7 @@ public class AuditServiceTests(SqlServerFixture sql) : IAsyncLifetime
     [Fact]
     public async Task Returns_only_the_accounts_own_entries_oldest_first()
     {
-        var ledger = new Sut(_db);
+        var ledger = new Sut(_db, new StubScreeningClient());
         await ledger.DepositAsync("NB-1001", 10m);
         await ledger.DepositAsync("NB-1002", 99m);
         await ledger.DepositAsync("NB-1001", 20m);

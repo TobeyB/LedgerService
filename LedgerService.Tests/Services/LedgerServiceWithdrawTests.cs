@@ -48,7 +48,7 @@ public class LedgerServiceWithdrawTests(SqlServerFixture sql) : IAsyncLifetime
     {
         await using var db = NewContext();
 
-        var result = await new Sut(db).WithdrawAsync("NB-1001", 40.25m);
+        var result = await new Sut(db, new StubScreeningClient()).WithdrawAsync("NB-1001", 40.25m);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(59.75m, await BalanceAsync("NB-1001"));
@@ -72,7 +72,7 @@ public class LedgerServiceWithdrawTests(SqlServerFixture sql) : IAsyncLifetime
     {
         await using var db = NewContext();
 
-        var result = await new Sut(db).WithdrawAsync("NB-1001", 100m);
+        var result = await new Sut(db, new StubScreeningClient()).WithdrawAsync("NB-1001", 100m);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(0m, await BalanceAsync("NB-1001"));
@@ -85,7 +85,7 @@ public class LedgerServiceWithdrawTests(SqlServerFixture sql) : IAsyncLifetime
     {
         await using var db = NewContext();
 
-        var result = await new Sut(db).WithdrawAsync("NB-1001", decimal.Parse(amount, CultureInfo.InvariantCulture));
+        var result = await new Sut(db, new StubScreeningClient()).WithdrawAsync("NB-1001", decimal.Parse(amount, CultureInfo.InvariantCulture));
 
         Assert.Equal(LedgerError.InsufficientFunds, result.Error);
         Assert.Equal(100m, await BalanceAsync("NB-1001"));
@@ -101,7 +101,7 @@ public class LedgerServiceWithdrawTests(SqlServerFixture sql) : IAsyncLifetime
     {
         await using var db = NewContext();
 
-        var result = await new Sut(db).WithdrawAsync("NB-1001", decimal.Parse(amount, CultureInfo.InvariantCulture));
+        var result = await new Sut(db, new StubScreeningClient()).WithdrawAsync("NB-1001", decimal.Parse(amount, CultureInfo.InvariantCulture));
 
         Assert.Equal(LedgerError.InvalidAmount, result.Error);
         Assert.Equal(100m, await BalanceAsync("NB-1001"));
@@ -114,7 +114,7 @@ public class LedgerServiceWithdrawTests(SqlServerFixture sql) : IAsyncLifetime
     {
         await using var db = NewContext();
 
-        var result = await new Sut(db).WithdrawAsync("NB-9999", 10m);
+        var result = await new Sut(db, new StubScreeningClient()).WithdrawAsync("NB-9999", 10m);
 
         Assert.Equal(LedgerError.AccountNotFound, result.Error);
         Assert.Empty(await TransactionsAsync());
@@ -128,7 +128,7 @@ public class LedgerServiceWithdrawTests(SqlServerFixture sql) : IAsyncLifetime
         var results = await Task.WhenAll(Enumerable.Range(0, 50).Select(async _ =>
         {
             await using var db = NewContext();
-            return await new Sut(db).WithdrawAsync("NB-1001", 10m);
+            return await new Sut(db, new StubScreeningClient()).WithdrawAsync("NB-1001", 10m);
         }));
 
         Assert.Equal(10, results.Count(r => r.IsSuccess));
@@ -147,7 +147,7 @@ public class LedgerServiceWithdrawTests(SqlServerFixture sql) : IAsyncLifetime
         var work = Enumerable.Range(0, 60).Select(async i =>
         {
             await using var db = NewContext();
-            var ledger = new Sut(db);
+            var ledger = new Sut(db, new StubScreeningClient());
             if (i % 2 == 0)
                 await ledger.DepositAsync("NB-1001", 7.50m);
             else

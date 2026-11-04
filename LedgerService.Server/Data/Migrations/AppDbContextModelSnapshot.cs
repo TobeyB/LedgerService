@@ -119,13 +119,17 @@ namespace LedgerService.Server.Data.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
 
-                    b.Property<string>("ResponseBody")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("ResponseStatusCode")
+                    b.Property<int?>("ResultError")
                         .HasColumnType("int");
 
+                    b.Property<Guid?>("ResultTransactionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Key");
+
+                    b.HasIndex("ResultTransactionId")
+                        .IsUnique()
+                        .HasFilter("[ResultTransactionId] IS NOT NULL");
 
                     b.ToTable("IdempotencyRecords", (string)null);
                 });
@@ -188,6 +192,14 @@ namespace LedgerService.Server.Data.Migrations
                         .HasForeignKey("LedgerService.Server.Models.Domain.AuditEntry", "TransactionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("LedgerService.Server.Models.Domain.IdempotencyRecord", b =>
+                {
+                    b.HasOne("LedgerService.Server.Models.Domain.Transaction", null)
+                        .WithOne()
+                        .HasForeignKey("LedgerService.Server.Models.Domain.IdempotencyRecord", "ResultTransactionId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("LedgerService.Server.Models.Domain.Transaction", b =>

@@ -22,7 +22,7 @@ public readonly record struct Money
         if (decimal.Round(amount, 2) != amount)
             return false;
 
-        money = new Money(amount);
+        money = new Money(amount + 0.00m); // always two decimals, so 12000 and 12000.00 look the same everywhere
         return true;
     }
 
