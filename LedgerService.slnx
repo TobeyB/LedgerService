@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="ledgerservice.client/ledgerservice.client.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+  <Project Path="LedgerService.Server/LedgerService.Server.csproj" />
+</Solution>
