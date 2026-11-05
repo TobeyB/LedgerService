@@ -23,4 +23,9 @@ public interface ILedgerService
     /// </summary>
     Task<LedgerResult<Transaction>> TransferAsync(
         string fromAccount, string toAccount, decimal amount, string? idempotencyKey = null, CancellationToken ct = default);
+
+    /// <summary>
+    /// Booked transactions where the account is either side, newest first. Fails with AccountNotFound for an unknown account.
+    /// </summary>
+    Task<LedgerResult<IReadOnlyList<Transaction>>> GetTransactionsAsync(string accountNumber, CancellationToken ct = default);
 }

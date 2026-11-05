@@ -26,7 +26,7 @@ function describeError(e: unknown): string {
     }
     // No answer, or an error that does not say whether the transfer happened.
     return 'The transfer may or may not have been made, because no clear answer arrived. '
-        + 'Pressing Transfer again is safe: it will not move the money twice. You can also check the audit trail.';
+        + 'Pressing Transfer again is safe: it will not move the money twice. You can also check the transactions list.';
 }
 
 export default function TransferForm({ accounts, onBooked }: {

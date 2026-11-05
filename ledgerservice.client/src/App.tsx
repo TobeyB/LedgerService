@@ -1,7 +1,6 @@
 ﻿import { useCallback, useEffect, useState } from 'react';
 import { getAccounts, type Account } from './api';
-import AccountOperations from './AccountOperations';
-import AuditTrail from './AuditTrail';
+import TransactionList from './TransactionList';
 import TransferForm from './TransferForm';
 import { money } from './format';
 
@@ -9,7 +8,7 @@ function App() {
     const [accounts, setAccounts] = useState<Account[]>();
     const [error, setError] = useState<string>();
     const [selected, setSelected] = useState<string>();
-    const [auditVersion, setAuditVersion] = useState(0);
+    const [bookingVersion, setBookingVersion] = useState(0);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -22,7 +21,7 @@ function App() {
         return () => controller.abort();
     }, []);
 
-    // After a booking: show the new balances and the new audit entry.
+    // After a booking: show the new balances and the new transaction.
     const onBooked = useCallback(async () => {
         try {
             setAccounts(await getAccounts());
@@ -30,7 +29,7 @@ function App() {
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Could not refresh the accounts.');
         }
-        setAuditVersion(v => v + 1);
+        setBookingVersion(v => v + 1);
     }, []);
 
     const selectedAccount = accounts?.find(a => a.accountNumber === selected);
@@ -39,7 +38,7 @@ function App() {
         <>
             <header className="page-header">
                 <h1>Ledger back office</h1>
-                <p>Accounts, deposits, withdrawals and transfers.</p>
+                <p>Accounts and transfers.</p>
             </header>
 
             <div className="stack">
@@ -87,10 +86,7 @@ function App() {
                 {accounts && accounts.length >= 2 && <TransferForm accounts={accounts} onBooked={onBooked} />}
 
                 {selectedAccount && (
-                    <>
-                        <AccountOperations key={selectedAccount.accountNumber} account={selectedAccount} onBooked={onBooked} />
-                        <AuditTrail accountNumber={selectedAccount.accountNumber} version={auditVersion} />
-                    </>
+                    <TransactionList accountNumber={selectedAccount.accountNumber} version={bookingVersion} />
                 )}
             </div>
         </>

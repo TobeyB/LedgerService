@@ -1,6 +1,6 @@
 # Ledger back office
 
-React + TypeScript page for the Ledger service: lists accounts, deposit, withdraw, transfer and the audit trail.
+React + TypeScript page for the Ledger service: lists accounts, makes transfers between them and shows an account's transactions.
 
 ```bash
 npm install

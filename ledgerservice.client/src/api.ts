@@ -6,21 +6,11 @@ export interface Account {
     currency: string;
 }
 
-export interface AuditEntry {
-    transactionId: string;
-    type: 'Deposit' | 'Withdrawal' | 'Transfer';
-    fromAccount: string | null;
-    toAccount: string | null;
-    amount: number; // display only
-    currency: string;
-    bookedAt: string;
-    recordedAt: string;
-}
 
-export async function getAuditTrail(accountNumber: string, signal?: AbortSignal): Promise<AuditEntry[]> {
-    const response = await fetch(`/api/accounts/${encodeURIComponent(accountNumber)}/audit`, { signal });
+export async function getTransactions(accountNumber: string, signal?: AbortSignal): Promise<BookedTransaction[]> {
+    const response = await fetch(`/api/accounts/${encodeURIComponent(accountNumber)}/transactions`, { signal });
     if (!response.ok) {
-        throw new Error(`Could not load audit trail (HTTP ${response.status}).`);
+        throw new Error(`Could not load transactions (HTTP ${response.status}).`);
     }
     return response.json();
 }
@@ -74,20 +64,10 @@ async function post(url: string, body: string, headers: Record<string, string> =
     throw new ApiError(response.status, detail ?? `HTTP ${response.status}`);
 }
 
-const accountUrl = (accountNumber: string) => `/api/accounts/${encodeURIComponent(accountNumber)}`;
-
-// Amounts are spliced into the JSON as text so they are never converted to a floating point number.
-const amountBody = (amountText: string) => `{"amount":${amountText}}`;
-
-export const deposit = (accountNumber: string, amountText: string) =>
-    post(`${accountUrl(accountNumber)}/deposits`, amountBody(amountText));
-
-export const withdraw = (accountNumber: string, amountText: string) =>
-    post(`${accountUrl(accountNumber)}/withdrawals`, amountBody(amountText));
-
 /**
  * The idempotency key makes a retry safe: if the first request did go through, the server answers
  * with the first result instead of moving the money again.
+ * The amount is spliced into the JSON as text so it is never converted to a floating point number.
  */
 export const transfer = (fromAccount: string, toAccount: string, amountText: string, idempotencyKey: string) =>
     post(

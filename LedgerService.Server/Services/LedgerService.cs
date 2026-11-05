@@ -13,6 +13,22 @@ public partial class LedgerService(AppDbContext db, IScreeningClient screening) 
             .OrderBy(a => a.AccountNumber)
             .ToListAsync(ct);
 
+    public async Task<LedgerResult<IReadOnlyList<Transaction>>> GetTransactionsAsync(
+        string accountNumber, CancellationToken ct = default)
+    {
+        if (!await db.Accounts.AnyAsync(a => a.AccountNumber == accountNumber, ct))
+            return LedgerResult<IReadOnlyList<Transaction>>.Fail(LedgerError.AccountNotFound);
+
+        var transactions = await db.Transactions
+            .AsNoTracking()
+            .Where(t => t.FromAccount == accountNumber || t.ToAccount == accountNumber)
+            .OrderByDescending(t => t.BookedAt)
+            .ThenByDescending(t => t.Id)
+            .ToListAsync(ct);
+
+        return LedgerResult<IReadOnlyList<Transaction>>.Success(transactions);
+    }
+
     public async Task<LedgerResult<Transaction>> DepositAsync(
         string accountNumber, decimal amount, CancellationToken ct = default)
     {

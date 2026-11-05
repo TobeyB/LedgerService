@@ -28,6 +28,13 @@ public class AccountsController(ILedgerService ledger, IAuditService audit) : Le
         return result.IsSuccess ? Ok(TransactionDto.From(result.Value!)) : ToProblem(result.Error!.Value);
     }
 
+    [HttpGet("{accountNumber}/transactions")]
+    public async Task<ActionResult<IReadOnlyList<TransactionDto>>> GetTransactions(string accountNumber, CancellationToken ct)
+    {
+        var result = await ledger.GetTransactionsAsync(accountNumber, ct);
+        return result.IsSuccess ? Ok(result.Value!.Select(TransactionDto.From)) : ToProblem(result.Error!.Value);
+    }
+
     [HttpGet("{accountNumber}/audit")]
     public async Task<ActionResult<IReadOnlyList<AuditEntryDto>>> GetAuditTrail(string accountNumber, CancellationToken ct) =>
         Ok((await audit.GetAuditTrailAsync(accountNumber, ct)).Select(AuditEntryDto.From));
