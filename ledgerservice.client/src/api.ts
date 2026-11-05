@@ -53,12 +53,11 @@ export class ApiError extends Error {
     }
 }
 
-async function post(url: string, amountText: string): Promise<BookedTransaction> {
-    // The amount is spliced in as text so it is never converted to a floating point number.
+async function post(url: string, body: string, headers: Record<string, string> = {}): Promise<BookedTransaction> {
     const response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: `{"amount":${amountText}}`,
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body,
     });
 
     if (response.ok) {
@@ -77,8 +76,21 @@ async function post(url: string, amountText: string): Promise<BookedTransaction>
 
 const accountUrl = (accountNumber: string) => `/api/accounts/${encodeURIComponent(accountNumber)}`;
 
+// Amounts are spliced into the JSON as text so they are never converted to a floating point number.
+const amountBody = (amountText: string) => `{"amount":${amountText}}`;
+
 export const deposit = (accountNumber: string, amountText: string) =>
-    post(`${accountUrl(accountNumber)}/deposits`, amountText);
+    post(`${accountUrl(accountNumber)}/deposits`, amountBody(amountText));
 
 export const withdraw = (accountNumber: string, amountText: string) =>
-    post(`${accountUrl(accountNumber)}/withdrawals`, amountText);
+    post(`${accountUrl(accountNumber)}/withdrawals`, amountBody(amountText));
+
+/**
+ * The idempotency key makes a retry safe: if the first request did go through, the server answers
+ * with the first result instead of moving the money again.
+ */
+export const transfer = (fromAccount: string, toAccount: string, amountText: string, idempotencyKey: string) =>
+    post(
+        '/api/transfers',
+        `{"fromAccount":${JSON.stringify(fromAccount)},"toAccount":${JSON.stringify(toAccount)},"amount":${amountText}}`,
+        { 'Idempotency-Key': idempotencyKey });

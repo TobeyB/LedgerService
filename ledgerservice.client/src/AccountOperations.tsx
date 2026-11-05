@@ -57,12 +57,12 @@ export default function AccountOperations({ account, onBooked }: {
     }
 
     return (
-        <section aria-label={`Deposit or withdraw for ${account.accountNumber}`}>
-            <h2>{account.accountNumber} – {account.owner}</h2>
-            <p>Balance: <strong>{money.format(account.balance)} {account.currency}</strong></p>
+        <section className="card" aria-label={`Deposit or withdraw for ${account.accountNumber}`}>
+            <h2>{account.accountNumber} <span className="muted">– {account.owner}</span></h2>
+            <p className="balance">{money.format(account.balance)} {account.currency}</p>
             <form onSubmit={e => e.preventDefault()}>
-                <label>
-                    Amount ({account.currency}){' '}
+                <label className="field">
+                    Amount ({account.currency})
                     <input
                         value={text}
                         onChange={e => setText(e.target.value)}
@@ -70,13 +70,15 @@ export default function AccountOperations({ account, onBooked }: {
                         autoComplete="off"
                         placeholder="1 500,50"
                         disabled={busy} />
-                </label>{' '}
-                <button type="button" disabled={busy} onClick={() => submit('deposit')}>Deposit</button>{' '}
-                <button type="button" disabled={busy} onClick={() => submit('withdraw')}>Withdraw</button>
+                </label>
+                <div className="actions">
+                    <button type="button" disabled={busy} onClick={() => submit('deposit')}>Deposit</button>
+                    <button type="button" className="secondary" disabled={busy} onClick={() => submit('withdraw')}>Withdraw</button>
+                </div>
             </form>
-            {busy && <p role="status">Working…</p>}
-            {message?.kind === 'success' && <p role="status">{message.text}</p>}
-            {message?.kind === 'error' && <p role="alert">{message.text}</p>}
+            {busy && <p role="status" className="message info">Working…</p>}
+            {message?.kind === 'success' && <p role="status" className="message success">{message.text}</p>}
+            {message?.kind === 'error' && <p role="alert" className="message error">{message.text}</p>}
         </section>
     );
 }

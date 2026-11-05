@@ -2,8 +2,8 @@
 import { getAccounts, type Account } from './api';
 import AccountOperations from './AccountOperations';
 import AuditTrail from './AuditTrail';
+import TransferForm from './TransferForm';
 import { money } from './format';
-import './App.css';
 
 function App() {
     const [accounts, setAccounts] = useState<Account[]>();
@@ -36,49 +36,64 @@ function App() {
     const selectedAccount = accounts?.find(a => a.accountNumber === selected);
 
     return (
-        <div>
-            <h1>Accounts</h1>
-            {error && <p role="alert">{error}</p>}
-            {accounts === undefined
-                ? (error ? null : <p>Loading…</p>)
-                : (
-                    <table aria-label="Accounts">
-                        <thead>
-                            <tr>
-                                <th>Account</th>
-                                <th>Owner</th>
-                                <th>Type</th>
-                                <th style={{ textAlign: 'right' }}>Balance</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {accounts.map(a => (
-                                <tr key={a.accountNumber}>
-                                    <td>{a.accountNumber}</td>
-                                    <td>{a.owner}</td>
-                                    <td>{a.type}</td>
-                                    <td style={{ textAlign: 'right' }}>{money.format(a.balance)} {a.currency}</td>
-                                    <td>
-                                        <button
-                                            type="button"
-                                            aria-pressed={selected === a.accountNumber}
-                                            onClick={() => setSelected(selected === a.accountNumber ? undefined : a.accountNumber)}>
-                                            Open
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+        <>
+            <header className="page-header">
+                <h1>Ledger back office</h1>
+                <p>Accounts, deposits, withdrawals and transfers.</p>
+            </header>
+
+            <div className="stack">
+                <section className="card" aria-label="Accounts">
+                    <h2>Accounts</h2>
+                    {error && <p role="alert" className="message error">{error}</p>}
+                    {accounts === undefined
+                        ? (error ? null : <p className="muted">Loading…</p>)
+                        : (
+                            <div className="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Account</th>
+                                            <th>Owner</th>
+                                            <th>Type</th>
+                                            <th className="num">Balance</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {accounts.map(a => (
+                                            <tr key={a.accountNumber} className={selected === a.accountNumber ? 'selected' : undefined}>
+                                                <td>{a.accountNumber}</td>
+                                                <td>{a.owner}</td>
+                                                <td>{a.type}</td>
+                                                <td className="num">{money.format(a.balance)} {a.currency}</td>
+                                                <td className="num">
+                                                    <button
+                                                        type="button"
+                                                        className="secondary small"
+                                                        aria-pressed={selected === a.accountNumber}
+                                                        onClick={() => setSelected(selected === a.accountNumber ? undefined : a.accountNumber)}>
+                                                        Open
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                </section>
+
+                {accounts && accounts.length >= 2 && <TransferForm accounts={accounts} onBooked={onBooked} />}
+
+                {selectedAccount && (
+                    <>
+                        <AccountOperations key={selectedAccount.accountNumber} account={selectedAccount} onBooked={onBooked} />
+                        <AuditTrail accountNumber={selectedAccount.accountNumber} version={auditVersion} />
+                    </>
                 )}
-            {selectedAccount && (
-                <>
-                    <AccountOperations key={selectedAccount.accountNumber} account={selectedAccount} onBooked={onBooked} />
-                    <AuditTrail accountNumber={selectedAccount.accountNumber} version={auditVersion} />
-                </>
-            )}
-        </div>
+            </div>
+        </>
     );
 }
 
