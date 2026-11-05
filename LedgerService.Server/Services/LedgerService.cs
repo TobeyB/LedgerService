@@ -16,6 +16,8 @@ public partial class LedgerService(AppDbContext db, IScreeningClient screening) 
     public async Task<LedgerResult<IReadOnlyList<Transaction>>> GetTransactionsAsync(
         string accountNumber, CancellationToken ct = default)
     {
+        accountNumber = AccountNumber.Normalize(accountNumber);
+
         if (!await db.Accounts.AnyAsync(a => a.AccountNumber == accountNumber, ct))
             return LedgerResult<IReadOnlyList<Transaction>>.Fail(LedgerError.AccountNotFound);
 
@@ -32,6 +34,8 @@ public partial class LedgerService(AppDbContext db, IScreeningClient screening) 
     public async Task<LedgerResult<Transaction>> DepositAsync(
         string accountNumber, decimal amount, CancellationToken ct = default)
     {
+        accountNumber = AccountNumber.Normalize(accountNumber);
+
         if (!Money.TryCreate(amount, out var money))
             return LedgerResult<Transaction>.Fail(LedgerError.InvalidAmount);
 
@@ -61,6 +65,8 @@ public partial class LedgerService(AppDbContext db, IScreeningClient screening) 
     public async Task<LedgerResult<Transaction>> WithdrawAsync(
         string accountNumber, decimal amount, CancellationToken ct = default)
     {
+        accountNumber = AccountNumber.Normalize(accountNumber);
+
         if (!Money.TryCreate(amount, out var money))
             return LedgerResult<Transaction>.Fail(LedgerError.InvalidAmount);
 

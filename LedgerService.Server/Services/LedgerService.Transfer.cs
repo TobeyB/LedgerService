@@ -19,10 +19,13 @@ public partial class LedgerService
     public async Task<LedgerResult<Transaction>> TransferAsync(
         string fromAccount, string toAccount, decimal amount, string? idempotencyKey = null, CancellationToken ct = default)
     {
+        fromAccount = AccountNumber.Normalize(fromAccount);
+        toAccount = AccountNumber.Normalize(toAccount);
+
         if (!Money.TryCreate(amount, out var money))
             return LedgerResult<Transaction>.Fail(LedgerError.InvalidAmount);
 
-        if (string.Equals(fromAccount, toAccount, StringComparison.OrdinalIgnoreCase))
+        if (fromAccount == toAccount)
             return LedgerResult<Transaction>.Fail(LedgerError.SameAccount);
 
         // Without a key nothing is remembered, so a retry is a new transfer. The id only identifies this attempt to screening.
@@ -79,8 +82,8 @@ public partial class LedgerService
                 .Where(a => a.AccountNumber == from || a.AccountNumber == to)
                 .Select(a => new { a.AccountNumber, a.Balance })
                 .ToListAsync(ct);
-            var source = accounts.FirstOrDefault(a => string.Equals(a.AccountNumber, from, StringComparison.OrdinalIgnoreCase));
-            var target = accounts.FirstOrDefault(a => string.Equals(a.AccountNumber, to, StringComparison.OrdinalIgnoreCase));
+            var source = accounts.FirstOrDefault(a => a.AccountNumber == from);
+            var target = accounts.FirstOrDefault(a => a.AccountNumber == to);
 
             if (source is null || target is null)
                 return LedgerResult<Transaction>.Fail(LedgerError.AccountNotFound);
@@ -118,7 +121,7 @@ public partial class LedgerService
         // Always touch the account with the lower number first, so two transfers in opposite directions
         // between the same accounts wait for each other instead of deadlocking.
         int debited, credited;
-        if (string.Compare(from, to, StringComparison.OrdinalIgnoreCase) < 0)
+        if (string.CompareOrdinal(from, to) < 0)
         {
             debited = await Debit();
             credited = await Credit();
@@ -224,7 +227,7 @@ public partial class LedgerService
     internal static string HashRequest(string from, string to, Money money)
     {
         var canonical = string.Create(CultureInfo.InvariantCulture,
-            $"{from.ToUpperInvariant()}|{to.ToUpperInvariant()}|{money.Amount:F2}");
+            $"{from}|{to}|{money.Amount:F2}");
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical)));
     }
 }
